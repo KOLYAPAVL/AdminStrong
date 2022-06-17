@@ -1,0 +1,49 @@
+{% extends "admin_strong_layout/base.html" %}
+
+{% load default %}
+
+{% block title %} {{title}} {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+{% if create_url%}
+<div class="container">
+    <a class="btn btn-warning" href="{{create_url}}">Создать</a>
+</div>
+{% endif %}
+<div class="container row">
+    <div class="col-12 card-body">
+        <div class="row">
+        {% for item in objects %}
+        <div class="col-12 col-lg-4 mb-2">
+        <div class="card">
+            <div class="card-header border-gray-100 py-5 px-4">
+                <!-- Price -->
+                <div class="d-flex mb-3">
+                    <span class="price display-2 mb-0" data-annual="0" data-monthly="0">{{item.title}}</span>
+                </div>
+                <h4 class="mb-3 text-black"></h4>
+                {% for info in item.info %}
+                <p class="fw-normal mb-0">{{info.name}}: {{info.value}}</p>
+                {% endfor %}
+            </div>
+            <form class="card-footer border-gray-100 d-grid px-4 pb-4" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="id" value="{{item.id}}">
+                <input type="hidden" name="value" value="{% if item.active %}0{% else%}1{% endif %}">
+                <button type="submit" class="btn {% if item.active %}btn-danger{% else %}btn-success{% endif %} d-inline-flex align-items-center justify-content-center">
+                    {% if item.active %}Выключить{% else %}Включить{% endif %}
+                </button>
+            </form>
+            <div class="card-footer border-gray-100 d-grid px-4 pb-4">
+                <a class="btn btn-gray-700 d-inline-flex align-items-center justify-content-center" href="{{item.url}}">Изменить</a>
+            </div>
+        </div>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

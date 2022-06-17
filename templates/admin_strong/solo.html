@@ -1,0 +1,65 @@
+{% extends "admin_strong_layout/base.html" %}
+
+{% load default %}
+
+{% block title %} {{title}} {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+{% if success %}
+    <div class="container mb-4">
+        <div class="btn btn-success w-100" id="infoAlert">Данные успешно обновлены</div>
+    </div>
+    <script>
+        window.history.pushState('', "{{title}}", window.location.pathname);
+        setTimeout(() => {
+            document.getElementById('infoAlert').remove();
+        }, 3000);
+    </script>
+{% endif %}
+{% if error %}
+<div class="container mb-4">
+    <div class="btn btn-danger w-100" id="errorAlert">Исправьте ошибки</div>
+    <script>
+        setTimeout(() => {
+            document.getElementById('errorAlert').remove();
+        }, 3000);
+    </script>
+</div>
+{% endif %}
+<form method="post" class="container row">
+    <script>
+        let now = null;
+    </script>
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="col-12 mb-3">
+        <div class="mb-4">
+            <label for="email">{{field.label}}</label>
+            {% if field|is_textarea %}
+            <textarea style="height: 150px;" type="{{field|field_type}}" class="form-control {% if field.errors %}is-invalid{% endif %}" name="{{field.name}}">{{field.value|safe}}</textarea>
+            {% else %}
+            <input type="{{field|field_type}}" value="{{field.value|safe}}" step="0.000001" class="form-control {% if field.errors %}is-invalid{% endif %}" name="{{field.name}}">
+            {% endif %}
+            {% if field.value.isoformat %}
+            <script>
+                now = new Date("{{field.value.isoformat}}");
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.querySelector('[name="{{field.name}}"]').value = now.toISOString().slice(0, 16);
+            </script>
+            {% endif %}
+            {% for error in field.errors %}
+            <div class="invalid-feedback">
+                {{error}}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    <div class="d-flex justify-content-center">
+        <button type="submit" class="btn btn-warning">Сохранить</button>
+    </div>
+</form>
+{% endblock content %}

@@ -1,0 +1,89 @@
+{% load default %}
+<div class="card card-body shadow border-0 table-wrapper table-responsive">
+    {% if success %}
+        <div class="container">
+            <div class="btn btn-success w-100" id="infoAlert">Объект успешно создан</div>
+        </div>
+        <script>
+            window.history.pushState('', "{{title}}", window.location.pathname);
+            setTimeout(() => {
+                document.getElementById('infoAlert').remove();
+            }, 3000);
+        </script>
+        {% endif %}
+        {% if error %}
+        <div class="container">
+            <div class="btn btn-danger w-100" id="errorAlert">Исправьте ошибки</div>
+        </div>
+        <script>
+            setTimeout(() => {
+                document.getElementById('errorAlert').remove();
+            }, 3000);
+        </script>
+    {% endif %}
+    <br>
+    <div class="container row">
+        <form class="container row" method="post">
+            <script>
+                let now = null;
+            </script>
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="col-12 mb-3">
+                <label for="email">{{field.label}}</label>
+                {% if field.name in select %}
+                    <select {% if field.name in readonly_fields %}disabled{% endif %} name="{{field.name}}" class="form-control {% if field.errors %}is-invalid{% endif %}">
+                        {% for choice in select|get_choices:field.name%}
+                        <option value="{{choice.value}}" {% if choice.value == field.value %}selected{% endif %}>{{choice.name}}</option>
+                        {% endfor %}
+                    </select>
+                {% elif field|is_bool_field %}
+                    <select {% if field.name in readonly_fields %}disabled{% endif %} name="{{field.name}}" class="form-control {% if field.errors %}is-invalid{% endif %}">
+                        <option value="true" {% if field.value|is_true %}selected{% endif %}>Да</option>
+                        <option value="false" {% if not field.value|is_true %}selected{% endif %}>Нет</option>
+                    </select>
+                {% else %}
+                    {% if field|is_textarea %}
+                    <textarea {% if field.name in readonly_fields %}disabled{% endif %} style="height: 150px;" step="0.0001" type="{{field|field_type}}" class="form-control {% if field.errors %}is-invalid{% endif %}" {% if not field.name in readonly_fields %}name="{{field.name}}"{% endif %}>{% if not field.value|is_none %}{{field.value|safe}}{% endif %}</textarea>
+                    {% else %}
+                    <input {% if field.name in readonly_fields %}disabled{% endif %} type="{{field|field_type}}" value="{% if not field.value|is_none %}{{field.value|safe}}{% endif %}" step="0.0001" class="form-control {% if field.errors %}is-invalid{% endif %}" id="{{field.name}}" {% if not field.name in readonly_fields %}name="{{field.name}}"{% endif %}>
+                    {% endif %}
+    
+                    {% if field.name in readonly_fields %}
+                    <input type="hidden" value="{% if not field.value|is_none %}{{field.value|safe}}{% endif %}" name="{{field.name}}" />
+                    {% endif %}
+                {% endif %}
+    
+                {% if field.name in foreign_key %}
+                <p class="text-secondary mt-2" style="font-size:14px;">Внимание! Данное поле указывает на ID объекта <b>{{foreign_key|get_foreign_name:field.name}}</b>. Чтобы указать значение, напишите его ID <a class="btn btn-warning btn-sm" target="_blank" href="{{foreign_key|get_foreign_url:field.name}}">Список</a></p>
+                {% endif %}
+                
+                {% for error in field.errors %}
+                <div class="invalid-feedback">
+                    {{error}}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-warning">Создать</button>
+            </div>
+        </form>
+    </div>
+    {% if info %}
+    <div class="row container">
+        <div class="col-12">
+            <div class="mt-6 mb-5">
+                <span class="h6">Информация</span>
+            </div>
+        </div>
+    </div>
+    <div class="row container">
+        <div class="col-12">
+            <blockquote class="blockquote text-center">
+                {{info}}
+            </blockquote>
+        </div>
+    </div>
+    {% endif %}
+</div>

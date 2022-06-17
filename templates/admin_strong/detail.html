@@ -1,0 +1,163 @@
+{% extends "admin_strong_layout/base.html" %}
+
+{% load default %}
+
+{% block title %} {{title}} {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center py-4">
+    <div class="d-block mb-4 mb-md-0">
+        <nav aria-label="breadcrumb" class="d-none d-md-inline-block">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent">
+                <li class="breadcrumb-item">
+                    <a href="#">
+                        <svg class="icon icon-xxs" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </a>
+                </li>
+                <li class="breadcrumb-item"><a href="/">Админка</a></li>
+                <li class="breadcrumb-item"><a href="{{back}}">{{title}}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">ID: {{object.id}}</li>
+            </ol>
+        </nav>
+        <h2 class="h4">{{title}}</h2>
+    </div>
+</div>
+{% if object %}
+<div class="card card-body shadow border-0 table-wrapper table-responsive" {% if readonly %}style="opacity: .7;"{% endif %}>
+    {% if success %}
+    <div class="container">
+        <div class="btn btn-success w-100" id="infoAlert">Данные успешно обновлены</div>
+    </div>
+    <script>
+        window.history.pushState('', "{{title}}", window.location.pathname);
+        setTimeout(() => {
+            document.getElementById('infoAlert').remove();
+        }, 3000);
+    </script>
+    {% endif %}
+    {% if error %}
+    <div class="container">
+        <div class="btn btn-danger w-100" id="errorAlert">Исправьте ошибки</div>
+    </div>
+    <script>
+        setTimeout(() => {
+            document.getElementById('errorAlert').remove();
+        }, 3000);
+    </script>
+    {% endif %}
+    <br>
+    <form class="container row" method="post">
+        <input type="hidden" name="pk" value="{{object.pk}}">
+        <script>
+            let now = null;
+        </script>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="col-12 mb-3">
+            <label for="email">{{field.label}}</label>
+            {% if field.name in select %}
+                <select {% if field.name in readonly_fields %}disabled{% endif %} name="{{field.name}}" class="form-control {% if field.errors %}is-invalid{% endif %}">
+                    {% for choice in select|get_choices:field.name%}
+                    <option value="{{choice.value}}" {% if choice.value == field.value %}selected{% endif %}>{{choice.name}}</option>
+                    {% endfor %}
+                </select>
+            {% elif field.name in boolean %}
+                <select {% if field.name in readonly_fields %}disabled{% endif %} name="{{field.name}}" class="form-control {% if field.errors %}is-invalid{% endif %}">
+                    <option value="true" {% if field.value|is_true %}selected{% endif %}>Да</option>
+                    <option value="false" {% if not field.value|is_true %}selected{% endif %}>Нет</option>
+                </select>
+            {% else %}
+                {% if field|is_textarea %}
+                <textarea {% if field.name in readonly_fields %}disabled{% endif %} style="height: 150px;" type="{{field|field_type}}" class="form-control {% if field.errors %}is-invalid{% endif %}" {% if not field.name in readonly_fields %}name="{{field.name}}"{% endif %}>{% if not field.value|is_none %}{{field.value|safe}}{% endif %}</textarea>
+                {% else %}
+                <input {% if field.name in readonly_fields %}disabled{% endif %} type="{{field|field_type}}" value="{% if not field.value|is_none %}{{field.value|safe}}{% endif %}" step="0.000001" class="form-control {% if field.errors %}is-invalid{% endif %}" id="{{field.name}}" {% if not field.name in readonly_fields %}name="{{field.name}}"{% endif %}>
+                {% endif %}
+
+                {% if field.name in readonly_fields %}
+                <input type="hidden" value="{% if not field.value|is_none %}{{field.value|safe}}{% endif %}" name="{{field.name}}" />
+                {% endif %}
+            {% endif %}
+
+            {% if field.name in foreign_key %}
+            <p class="text-secondary mt-2" style="font-size:14px;">Внимание! Данное поле указывает на ID объекта <b>{{foreign_key|get_foreign_name:field.name}}</b>. Чтобы указать значение, напишите его ID <a class="btn btn-warning btn-sm" target="_blank" href="{{foreign_key|get_foreign_url:field.name}}">Список</a></p>
+            {% endif %}
+            
+            {% if field.value.isoformat %}
+            <script>
+                now = new Date("{{field.value.isoformat}}");
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.querySelector('#{{field.name}}').value = now.toISOString().slice(0, 16);
+            </script>
+            {% endif %}
+            {% for error in field.errors %}
+            <div class="invalid-feedback">
+                {{error}}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        {% if not readonly %}
+        <div class="d-flex justify-content-center">
+            <button type="submit" class="btn btn-warning">Сохранить</button>
+        </div>
+        {% endif %}
+    </form>
+    {% if delete %}
+        <form method="post" class="container row">
+            {% csrf_token %}
+            <input type="hidden" name="delete" value="1">
+            <div class="d-flex justify-content-center mt-3">
+                <button type="submit" class="btn btn-danger">Удалить</button>
+            </div>
+        </form>
+    {% endif %}
+    {% if info %}
+    <div class="row container">
+        <div class="col-12">
+            <div class="mt-6 mb-5">
+                <span class="h6">Информация</span>
+            </div>
+        </div>
+    </div>
+    <div class="row container">
+        <div class="col-12">
+            <blockquote class="blockquote text-center">
+                {{info}}
+            </blockquote>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if title == "Пользователи" %}
+<div class="card card-body mt-4 shadow border-0 table-wrapper table-responsive">
+    <div class="container-fluid row">
+        <h2 class="h4">Рефералы</h2>
+        <table class="table user-table table-hover align-items-center">
+            <thead>
+                <tr>
+                    <th class="border-bottom">ID</th>	
+                    <th class="border-bottom">Имя пользователя</th>	
+                </tr>
+            </thead>
+            <tbody>
+                {% for referal in object.referals.all %}
+                <tr style="cursor:pointer" onclick="window.location='/users/{{referal.id}}';">
+                    <td>{{referal.id}}</td>
+                    <td>{{referal.first_name}} {{referal.last_name}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+404. Объект не найден
+{% endif %}
+
+{% endblock content %}
